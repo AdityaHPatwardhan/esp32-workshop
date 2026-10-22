@@ -1,0 +1,15 @@
+CONFIG_IDF_TARGET="esp32s3"
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+# Wi-Fi + camera drivers make the app ~1 MB: use the 1.5 MB single-app layout
+CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
+
+# Use PSRAM if the module has it (most ESP32-S3-CAM boards: 8 MB octal), keep booting if not
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_IGNORE_NOTFOUND=y
+CONFIG_SPIRAM_USE_CAPS_ALLOC=y
+
+# Needed to list FreeRTOS tasks
+CONFIG_FREERTOS_USE_TRACE_FACILITY=y
+

@@ -1,0 +1,30 @@
+CONFIG_IDF_TARGET="esp32s3"
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# 3 MB app partition (model + TFLite Micro + Wi-Fi don't fit the default 1 MB)
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# PSRAM: used if present (8MB octal on most S3-CAM boards), ignored if not
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_IGNORE_NOTFOUND=y
+CONFIG_SPIRAM_USE_CAPS_ALLOC=y
+
+# Camera
+CONFIG_OV2640_SUPPORT=y
+CONFIG_CAMERA_CORE1=y
+
+# Wi-Fi: keep the radio awake so broadcasts aren't delayed
+CONFIG_ESP_WIFI_STA_DISCONNECTED_PM_ENABLE=n
+
+# Keep the console readable
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+
+# Sockets: UDP reporter + UDP video + HTTP server (default 10 is too few)
+CONFIG_LWIP_MAX_SOCKETS=16
+
+# Let Wi-Fi/LWIP buffers use PSRAM so internal RAM stays free for the model
+CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y

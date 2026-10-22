@@ -1,0 +1,4 @@
+# ESP32-S3-EYE: user LED on GPIO3, USB-C goes to the chip's native USB.
+# Camera pins are the defaults (S3-EYE layout).
+CONFIG_WORKSHOP_LED_GPIO=3
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y

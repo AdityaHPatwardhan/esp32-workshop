@@ -1,0 +1,131 @@
+menu "Workshop: Hello Board (blink + board report)"
+
+    config BLINK_GPIO
+        int "LED GPIO number"
+        range 0 48
+        default 2
+        help
+            GPIO the on-board LED is connected to (GPIO2 on most ESP32-S3-CAM boards, GPIO3 on ESP32-S3-EYE).
+
+    config BLINK_ACTIVE_LOW
+        bool "LED is active-low (lights when pin is 0)"
+        default n
+
+    config BLINK_PERIOD_MS
+        int "Blink period in ms"
+        range 50 10000
+        default 1000
+
+    config BLINK_USE_REGISTERS
+        bool "Toggle the LED by writing GPIO registers directly (teaching mode)"
+        default n
+        help
+            Instead of calling gpio_set_level(), write straight to the
+            GPIO_OUT_W1TS / GPIO_OUT_W1TC registers. Same result: a driver
+            call is just a memory write underneath.
+
+    config PROBE_CAMERA
+        bool "Look for a camera at boot"
+        default y
+
+    config PROBE_WIFI
+        bool "Scan for Wi-Fi networks at boot"
+        default y
+
+    config PROBE_MIC
+        bool "Listen to an I2S microphone at boot"
+        default n
+        help
+            Needs the microphone's I2S pins below. Off by default because the
+            pins differ between boards (and may clash with the LED pin).
+
+    menu "Microphone pins (I2S, e.g. INMP441 / MSM261)"
+        depends on PROBE_MIC
+        config MIC_PIN_BCLK
+            int "BCLK / SCK"
+            range 0 48
+            default 41
+        config MIC_PIN_WS
+            int "WS / LRCLK"
+            range 0 48
+            default 42
+        config MIC_PIN_DIN
+            int "DATA / SD"
+            range 0 48
+            default 2
+    endmenu
+
+    menu "Camera pins (default: ESP32-S3-EYE layout, used by most ESP32-S3-CAM boards)"
+        config CAM_PIN_PWDN
+            int "PWDN (-1 = not connected)"
+            range -1 48
+            default -1
+        config CAM_PIN_RESET
+            int "RESET (-1 = not connected)"
+            range -1 48
+            default -1
+        config CAM_PIN_XCLK
+            int "XCLK"
+            range 0 48
+            default 15
+        config CAM_PIN_SIOD
+            int "SIOD (SCCB SDA)"
+            range 0 48
+            default 4
+        config CAM_PIN_SIOC
+            int "SIOC (SCCB SCL)"
+            range 0 48
+            default 5
+        config CAM_PIN_D0
+            int "D0 (Y2)"
+            range 0 48
+            default 11
+        config CAM_PIN_D1
+            int "D1 (Y3)"
+            range 0 48
+            default 9
+        config CAM_PIN_D2
+            int "D2 (Y4)"
+            range 0 48
+            default 8
+        config CAM_PIN_D3
+            int "D3 (Y5)"
+            range 0 48
+            default 10
+        config CAM_PIN_D4
+            int "D4 (Y6)"
+            range 0 48
+            default 12
+        config CAM_PIN_D5
+            int "D5 (Y7)"
+            range 0 48
+            default 18
+        config CAM_PIN_D6
+            int "D6 (Y8)"
+            range 0 48
+            default 17
+        config CAM_PIN_D7
+            int "D7 (Y9)"
+            range 0 48
+            default 16
+        config CAM_PIN_VSYNC
+            int "VSYNC"
+            range 0 48
+            default 6
+        config CAM_PIN_HREF
+            int "HREF"
+            range 0 48
+            default 7
+        config CAM_PIN_PCLK
+            int "PCLK"
+            range 0 48
+            default 13
+        config CAM_XCLK_FREQ_HZ
+            int "XCLK frequency (Hz)"
+            default 15000000
+        config CAM_VFLIP
+            bool "Flip image vertically"
+            default y
+    endmenu
+
+endmenu

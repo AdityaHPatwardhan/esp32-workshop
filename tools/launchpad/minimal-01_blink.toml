@@ -1,0 +1,17 @@
+# ESP Launchpad "Minimal" config: one-click flash of 01-Blink, then a console WITH a command
+# input box (enabled by [[portConnectionOptions]]) so teams can type e.g.  team Rockets
+# Open:  https://espressif.github.io/esp-launchpad/minimal-launchpad/?flashConfigURL=<URL of this file>
+# Format: https://github.com/espressif/esp-launchpad/blob/main/config/minimal_launchpad_config.toml
+
+esp_toml_version = 1.0
+supported_apps = ["01-Blink"]
+multipart = true
+chip = "esp32s3"
+
+[[portConnectionOptions]]
+console_baudrate = 115200
+
+[01-Blink]
+readme.text = "https://YOUR-GITHUB-USER.github.io/esp32-workshop/tools/launchpad/README-participants.md"
+image.esp32s3.parts = ["https://YOUR-GITHUB-USER.github.io/esp32-workshop/binaries/01_blink-merged.bin"]
+image.esp32s3.addresses = ["0x0"]
