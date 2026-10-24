@@ -6,3 +6,4 @@ sdkconfig.old
 __pycache__/
 .DS_Store
 tools/dashboard/team_names.json
+firmware/04_rainmaker_switch/dependencies.lock
