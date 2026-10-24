@@ -1,0 +1,11 @@
+CONFIG_FREERTOS_PLACE_FUNCTIONS_INTO_FLASH=y
+
+# Workshop: AI-Thinker ESP32-CAM. The switch drives the small red LED on GPIO33 (lights when LOW).
+# The button is GPIO0, i.e. the IO0 pin: touch it to GND (long press 3 s = Wi-Fi reset, 10 s = factory reset).
+CONFIG_EXAMPLE_OUTPUT_GPIO=33
+CONFIG_EXAMPLE_OUTPUT_ACTIVE_LOW=y
+# ...and the bright white flash LED on GPIO4 (full brightness: it's the "lamp")
+CONFIG_EXAMPLE_OUTPUT2_GPIO=4
+
+# Provisioning overflowed the default NimBLE host stack (crash + "device disconnected" in the app)
+CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE=8192
