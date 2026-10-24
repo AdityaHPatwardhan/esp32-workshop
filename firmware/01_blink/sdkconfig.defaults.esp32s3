@@ -1,0 +1,2 @@
+# Applied automatically when building for the ESP32-S3: its PSRAM is octal SPI
+CONFIG_SPIRAM_MODE_OCT=y

@@ -4,6 +4,7 @@
     python flash.py --team "Rockets"
     python flash.py --team "Rockets" --port /dev/cu.usbmodem1101
     python flash.py --team "Rockets" --ssid WorkshopWiFi --password secret123
+    python flash.py --team "Rockets" --bins ../binaries-esp32cam --manual-boot   (ESP32-CAM via USB-UART)
 
 Needs:  pip install esptool esp-idf-nvs-partition-gen
 """
@@ -15,11 +16,12 @@ import sys
 import tempfile
 from importlib import metadata
 
-CHIP = "esp32s3"
 NVS_OFFSET = "0x9000"
 NVS_SIZE = "0x6000"
 NVS_NAMESPACE = "workshop"
-PARTS = [("0x0", "bootloader.bin"), ("0x8000", "partition-table.bin"), ("0x10000", "app.bin")]
+# the bootloader lives at 0x0 on the ESP32-S3 but at 0x1000 on the classic ESP32
+BOOTLOADER_OFFSET = {"esp32s3": "0x0", "esp32": "0x1000"}
+PARTS = [("bootloader", "bootloader.bin"), ("0x8000", "partition-table.bin"), ("0x10000", "app.bin")]
 HERE = os.path.dirname(os.path.abspath(__file__))
 INSTALL_HINT = "pip install esptool esp-idf-nvs-partition-gen"
 
@@ -49,7 +51,7 @@ def esptool_cmd(*args):
     """esptool v5 renamed write_flash -> write-flash; v4 only knows the underscore form."""
     ver = module_version("esptool")
     major = int(ver.split(".")[0]) if ver else 0
-    fixed = [a.replace("_", "-") if major >= 5 and a in ("write_flash", "erase_flash") else a
+    fixed = [a.replace("_", "-") if major >= 5 and a in ("write_flash", "erase_flash", "no_reset") else a
              for a in args]
     return [sys.executable, "-m", "esptool", *fixed]
 
@@ -74,8 +76,14 @@ def main():
                     help="binaries directory (default: ../binaries)")
     ap.add_argument("--erase", action="store_true", help="erase the whole flash first")
     ap.add_argument("--baud", default="460800", help="flashing baud rate (default 460800)")
+    ap.add_argument("--chip", choices=sorted(BOOTLOADER_OFFSET),
+                    help="esp32s3 or esp32 (default: esp32 for binaries-esp32cam, else esp32s3)")
+    ap.add_argument("--manual-boot", action="store_true",
+                    help="board has no auto-reset (e.g. wired through another board's USB-UART): "
+                         "connect IO0 to GND and reset the board yourself before flashing")
     args = ap.parse_args()
 
+    chip = args.chip or ("esp32" if "esp32cam" in os.path.abspath(args.bins) else "esp32s3")
     team = args.team.strip()
     check_value("Team name", team, 24)
     if args.ssid is not None:
@@ -105,7 +113,9 @@ def main():
         run([sys.executable, "-m", "esp_idf_nvs_partition_gen", "generate",
              csv_path, bin_path, NVS_SIZE])
 
-        base = ["--chip", CHIP, "--baud", args.baud]
+        base = ["--chip", chip, "--baud", args.baud]
+        if args.manual_boot:
+            base += ["--before", "no_reset"]
         if args.port:
             base += ["--port", args.port]
         if args.erase:
@@ -113,7 +123,8 @@ def main():
 
         flash_args = []
         for offset, name in PARTS:
-            flash_args += [offset, os.path.join(app_dir, name)]
+            flash_args += [BOOTLOADER_OFFSET[chip] if offset == "bootloader" else offset,
+                           os.path.join(app_dir, name)]
         flash_args += [NVS_OFFSET, bin_path]
         run(esptool_cmd(*base, "write_flash", *flash_args))
 

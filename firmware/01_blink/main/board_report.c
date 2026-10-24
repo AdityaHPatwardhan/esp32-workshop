@@ -383,7 +383,7 @@ void board_report(board_info_t *info)
         nvs_flash_init();
     }
 
-    printf("\n\n  ============  HELLO FROM YOUR %s BOARD  ============\n", "ESP32-S3");
+    printf("\n\n  ============  HELLO FROM YOUR %s BOARD  ============\n", CONFIG_IDF_TARGET);
     report_chip();
     report_memory();
     report_partitions();

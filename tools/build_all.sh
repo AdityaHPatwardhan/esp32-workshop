@@ -4,10 +4,13 @@
 #   binaries/<app>-merged.bin                             -> for ESP Launchpad (flash at 0x0)
 # Usage:  source ~/esp/esp-idf/export.sh && ./tools/build_all.sh
 #         BOARD=s3eye ./tools/build_all.sh    (ESP32-S3-EYE: LED GPIO3, native-USB console)
+#         BOARD=esp32cam ./tools/build_all.sh (AI-Thinker ESP32-CAM: classic ESP32, LED GPIO33)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BOARD="${BOARD:-}"
+TARGET=esp32s3
+[[ "$BOARD" == "esp32cam" ]] && TARGET=esp32
 OUT="$ROOT/binaries${BOARD:+-$BOARD}"
 mkdir -p "$OUT"
 
@@ -25,7 +28,7 @@ build() {
     if [[ -n "$extra" ]]; then
         args+=(-DSDKCONFIG="$dir/$bdir/sdkconfig" -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;$extra")
     fi
-    idf.py "${args[@]}" set-target esp32s3 >/dev/null
+    idf.py "${args[@]}" set-target "$TARGET" >/dev/null
     idf.py "${args[@]}" build merge-bin >/dev/null
 
     mkdir -p "$OUT/$name"
