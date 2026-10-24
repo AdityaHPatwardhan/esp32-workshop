@@ -305,6 +305,19 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def do_POST(self):
+        if self.path == "/clear_offline":
+            with lock:
+                gone = [m for m, t in teams.items() if not t["online"]]
+                for m in gone:
+                    del teams[m]
+                    frames.pop(m, None)
+                    if m in first_online:
+                        first_online.remove(m)
+                add_event("online", f"Cleared {len(gone)} offline board(s)")
+            log(f"cleared {len(gone)} offline boards")
+            self.send_response(204)
+            self.end_headers()
+            return
         if self.path == "/reset_seen":
             with lock:
                 for t in teams.values():
@@ -629,6 +642,8 @@ function render(s){
   const ts = s.teams.slice().sort((a,b)=>a.rank-b.rank);
   document.getElementById("empty").style.display = ts.length ? "none" : "";
   ts.forEach(tile);
+  // boards removed on the server (clear_offline): drop their tiles too
+  for(const mac of Object.keys(tiles)) if(!teamsBy[mac]){ tiles[mac].remove(); delete tiles[mac]; }
   // Hello Board mode until any board runs the Person Detector
   const on = ts.filter(t => t.online), hello = !on.some(t => t.app !== "hello");
   document.body.classList.toggle("hellomode", hello);
