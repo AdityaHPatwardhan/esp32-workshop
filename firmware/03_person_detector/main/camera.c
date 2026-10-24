@@ -35,7 +35,7 @@ esp_err_t camera_start(void)
         .frame_size = FRAMESIZE_96X96,
         .jpeg_quality = 12,
         // A 96x96 frame is only 9 KB, so it fits in internal RAM if there is no PSRAM
-        // (with PSRAM, a GC2145 is switched to VGA below: 300 KB per frame)
+        // (with PSRAM, a GC2145 is switched to 240x240 below: 56 KB per frame)
         .fb_count = psram ? 2 : 1,
         .fb_location = psram ? CAMERA_FB_IN_PSRAM : CAMERA_FB_IN_DRAM,
         .grab_mode = CAMERA_GRAB_LATEST,
@@ -49,12 +49,13 @@ esp_err_t camera_start(void)
     sensor_t *s = esp_camera_sensor_get();
     if (s->id.PID == GC2145_PID && psram) {
         // The GC2145 makes small sizes by cropping: 96x96 is a tiny zoomed-in patch of the
-        // scene. Capture VGA instead (most of the field of view) and shrink it in software.
+        // scene. Capture 240x240 (a much wider view) and shrink it in software. VGA would be
+        // wider still, but is more data than the ESP32's camera input can take (it crashes).
         esp_camera_deinit();
-        cfg.frame_size = FRAMESIZE_VGA;
+        cfg.frame_size = FRAMESIZE_240X240;
         err = esp_camera_init(&cfg);
         if (err != ESP_OK) {
-            ESP_LOGE(TAG, "Camera init at VGA failed (0x%x)", err);
+            ESP_LOGE(TAG, "Camera init at 240x240 failed (0x%x)", err);
             return err;
         }
         s = esp_camera_sensor_get();
@@ -87,7 +88,7 @@ esp_err_t camera_grab_int8(int8_t *dst, int len)
         return n == len ? ESP_OK : ESP_ERR_INVALID_SIZE;
     }
 
-    // Bigger frame (GC2145 at VGA): take the centre square and average it down to 96x96
+    // Bigger frame (GC2145 at 240x240): take the centre square and average it down to 96x96
     if (len < FRAME_W * FRAME_H || fb->len < fb->width * fb->height) {
         esp_camera_fb_return(fb);
         return ESP_ERR_INVALID_SIZE;
