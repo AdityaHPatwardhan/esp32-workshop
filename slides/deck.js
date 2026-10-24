@@ -15,7 +15,13 @@
     el.href = url; el.target = "_blank"; el.textContent = url.replace(/^https?:\/\//, "");
   });
   document.querySelectorAll("[data-hosts]").forEach(el => {
-    el.innerHTML = CONFIG.hosts.map(h => `<div><b>${h.name}</b><span>${h.org}</span></div>`).join("");
+    const contact = el.hasAttribute("data-contact");
+    el.innerHTML = CONFIG.hosts.map(h => {
+      const extra = !contact ? "" :
+        (h.linkedin ? `<a class="hc" href="${h.linkedin}" target="_blank">in/${h.linkedin.replace(/\/+$/, "").split("/").pop()}</a>` : "") +
+        (h.email ? `<a class="hc" href="mailto:${h.email}">${h.email}</a>` : "");
+      return `<div><b>${h.name}</b><span>${h.org}</span>${extra}</div>`;
+    }).join("");
   });
 
   // ---- real 8x8 pixel crop from a board frame ("An image is just numbers")

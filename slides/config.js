@@ -1,8 +1,9 @@
 // Edit before the workshop: names and links.
 window.CONFIG = {
   hosts: [
-    { name: "Aditya Patwardhan", org: "Espressif Systems" },
-    { name: "Harsh Mutha",       org: "Intangles" },
+    // linkedin: full profile URL; both are shown on the Thank you slide
+    { name: "Aditya Patwardhan", org: "Espressif Systems", linkedin: "https://www.linkedin.com/in/aditya-patwardhan-a9a052136/", email: "aditya.patwardhan@espressif.com" },
+    { name: "Harsh Mutha",       org: "Intangles",         linkedin: "https://www.linkedin.com/in/harsh-mutha/", email: "mutha.harsh@gmail.com" },
   ],
   college:    "Pune Institute of Computer Technology",
   date:       "",                 // optional, e.g. "14 November 2026"

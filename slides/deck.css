@@ -118,6 +118,7 @@ a.store b { font-weight: 800; }
 .hosts div + div { border-color: var(--cyan); }
 .hosts b { display: block; font-size: 24px; }
 .hosts span { color: var(--dim); font-size: 18px; }
+.hosts a.hc { display: block; font-size: 17px; color: var(--cyan); text-decoration: none; margin-top: 4px; font-family: var(--mono); }
 .card .icon { font-size: 34px; margin-bottom: 8px; }
 .pill { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 15px; font-weight: 700; background: #e6e9f2; color: var(--text); }
 .big-num { font-size: 56px; font-weight: 800; line-height: 1; }
