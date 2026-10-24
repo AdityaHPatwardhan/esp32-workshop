@@ -10,6 +10,7 @@
 | `firmware/01_blink` | **Hello Board**: prints a board report (chip, PSRAM, where things live in memory, partitions, camera model + brightness, I2S mic level, Wi-Fi scan, FreeRTOS tasks, RAM vs flash restart counters), then blinks the LED; BOOT restarts. Mic probe needs the board's mic pins (on for S3-EYE) |
 | `firmware/03_person_detector` | Camera + TFLite Micro person detection → UDP broadcast with team name |
 | `binaries/` | Built output (`tools/build_all.sh`): per-part bins for `flash.py`, `*-merged.bin` for Launchpad |
+| `binaries-esp32cam/` | Same for the AI-Thinker ESP32-CAM (`BOARD=esp32cam`). `esp32_RainMaker_switch-merged.bin` is Espressif's prebuilt ESP RainMaker switch example (from espressif.github.io/esp-rainmaker), flash at 0x0 |
 | `tools/dashboard/dashboard.py` | Projector dashboard (Python stdlib only): team tiles with **live camera video** + a big spotlight view. `--demo` to rehearse without boards, `--no-video` for status only |
 | `tools/flash.py` | CLI fallback: flash + write the team name into NVS in one command |
 | `tools/snap_to_png.py` | "What the AI sees": saves the 96×96 frame the model just used (console command `snap`) |

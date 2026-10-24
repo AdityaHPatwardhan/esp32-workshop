@@ -106,6 +106,12 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
 .divwire { position: absolute; right: 40px; top: 50%; width: 620px; height: 400px; transform: translateY(-50%); }
 .wiresteps { margin: 26px 0 0; padding-left: 26px; font-size: 20px; line-height: 1.35; color: var(--text); }
 .wiresteps li { margin: 6px 0; }
+.appcard { display: flex; flex-direction: column; gap: 10px; }
+.apphead { display: flex; align-items: center; gap: 16px; }
+.apphead img { width: 72px; height: 72px; border-radius: 16px; box-shadow: 0 6px 16px rgba(20,24,43,.18); }
+.apphead h3 { margin: 0; } .apphead p { margin: 2px 0 0; font-size: 16px; }
+a.store { display: block; padding: 10px 14px; border-radius: 10px; background: #14182b; color: #ffffff; text-decoration: none; font-size: 18px; }
+a.store b { font-weight: 800; }
 .credit { position: absolute; left: 72px; bottom: 16px; font-size: 11px; color: #8a92a8; }
 .hosts { display: flex; gap: 40px; }
 .hosts div { border-left: 4px solid var(--amber); padding-left: 14px; text-align: left; }

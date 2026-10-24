@@ -1139,22 +1139,29 @@ A neuron is nothing magical: multiply each input by a weight, add them up, add a
   <h2>Control your board from your phone</h2>
   <div class="row grow">
     <ol class="steps" style="flex:1.3">
-      <li>Install <b>ESP RainMaker</b> app, sign up</li>
-      <li>Same link → <b>3-RainMaker-Switch</b> → Flash<br><a class="lplink mono" data-cfg-link="launchpad"></a></li>
-      <li>Console shows a <b>QR code</b></li>
-      <li>App → <b>Add device</b> → scan QR → pick Wi-Fi</li>
-      <li>Toggle the switch 📱 → watch the console. Press <b>BOOT</b> → watch the app</li>
+      <li>Install the <b>ESP RainMaker</b> app (right) and sign up</li>
+      <li>IO0 → GND, <b>RESET</b>. Same link → <b>3-RainMaker-Switch</b> → Flash<br><a class="lplink mono" data-cfg-link="launchpad"></a></li>
+      <li>Remove IO0, <b>RESET</b>. Get your board's <b>QR code</b> from an instructor</li>
+      <li>App → <b>Add device</b> → scan QR → Wi-Fi <b class="mono" data-cfg="wifiSsid"></b></li>
+      <li>Toggle the switch 📱 → watch the board. Touch <b>IO0 to GND</b> → watch the app</li>
     </ol>
-    <div class="vcenter" style="flex:1">
+    <div class="vcenter" style="flex:1;gap:16px">
+      <div class="card appcard">
+        <div class="apphead"><img src="img/rainmaker-app.png" alt="ESP RainMaker app icon"><div><h3>ESP RainMaker</h3><p>by Espressif Systems · free</p></div></div>
+        <a class="store" href="https://play.google.com/store/apps/details?id=com.espressif.rainmaker" target="_blank"><b>Android</b> · Google Play</a>
+        <a class="store" href="https://apps.apple.com/app/esp-rainmaker/id1497491540" target="_blank"><b>iPhone</b> · App Store</a>
+        <p class="small">Search <b>"ESP RainMaker"</b>. Turn on Bluetooth (and Location on Android)</p>
+      </div>
       <div class="card">
         <h3>🌍 The real test</h3>
-        <p>Turn off Wi-Fi on your phone and use <b>mobile data</b>. Does it still work? <br><br>Which path does the message take now?</p>
+        <p>Turn off Wi-Fi on your phone and use <b>mobile data</b>. Does it still work? Which path does the message take now?</p>
       </div>
     </div>
   </div>
   </div>
   <aside class="notes">Our Launchpad link includes Espressif's RainMaker switch binary. The default ESP Launchpad page (espressif.github.io/esp-launchpad) also lists Espressif's ready-made RainMaker binaries (switch, led_light, fan, temperature_sensor, and a standalone camera example for ESP32-S3). Flashing these erases the person detector; that's fine at this point.
-  Ask participants to install the app and sign up during the break. Phones need Bluetooth + location permission for BLE scanning on Android.
+  ESP32-CAM: Launchpad's console can't open through a plain USB-TTL adapter, so read each board's QR code / proof-of-possession from the instructor laptop's serial monitor (or demo with one board at the front). The switch's button is GPIO0, i.e. touching IO0 to GND.
+  Ask participants to install the app and sign up early. Phones need Bluetooth + location permission for BLE scanning on Android.
   Internet: the router must be online (Ethernet with the captive portal logged in, or phone tethering). Test this example on the actual venue network before the day.</aside>
   </section>
   <section data-title="What just happened">
