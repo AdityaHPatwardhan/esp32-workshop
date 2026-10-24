@@ -17,7 +17,9 @@ Standard library only - no pip install needed.
 import argparse
 import base64
 import json
+import os
 import random
+import re
 import socket
 import string
 import threading
@@ -35,6 +37,47 @@ teams = {}          # mac -> dict
 first_online = []   # macs, in the order they first appeared
 events = []         # newest last: {"t": epoch, "kind": str, "text": str}
 frames = {}         # mac -> (seq, jpeg bytes, time received)
+# Team names set on the dashboard (✎ on a tile). They win over the name the board sends,
+# so boards without a working console can still be named. Kept across dashboard restarts.
+NAMES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "team_names.json")
+TEAM_NAME_RE = re.compile(r"^[A-Za-z0-9 _.-]{1,%d}$" % MAX_TEAM_LEN)
+names = {}          # mac -> name
+
+
+def load_names():
+    try:
+        with open(NAMES_FILE) as f:
+            data = json.load(f)
+        names.update({m: n for m, n in data.items() if isinstance(n, str) and TEAM_NAME_RE.match(n)})
+    except (OSError, ValueError):
+        pass
+
+
+def save_names():
+    tmp = NAMES_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(names, f, indent=1)
+    os.replace(tmp, NAMES_FILE)
+
+
+def rename(mac, name):
+    """Set (or with "" clear) a dashboard team name. Returns False for an unknown board."""
+    with lock:
+        t = teams.get(mac)
+        if t is None:
+            return False
+        old = t["label"]
+        if name:
+            names[mac] = name
+        else:
+            names.pop(mac, None)
+        save_names()
+        t["name"] = names.get(mac) or t.get("board_name", "")
+        t["label"] = display_name(mac, t["name"])
+        if t["label"] != old:
+            add_event("online", f"{old} is now team {t['label']}")
+            log(f"renamed {mac}: {old!r} -> {t['label']!r}")
+    return True
 
 
 def log(msg):
@@ -79,8 +122,10 @@ def handle_packet(data, addr):
     if not isinstance(msg, dict):
         return
     mac = clean_str(msg.get("mac", ""), 17).lower()
-    name = clean_str(msg.get("team", ""), MAX_TEAM_LEN)
+    board_name = clean_str(msg.get("team", ""), MAX_TEAM_LEN)
     app = "hello" if msg.get("app") == "hello" else "detector"
+    with lock:
+        name = names.get(mac) or board_name
     # Hello Board reports in before the team has typed a name; the detector always has one
     if len(mac) < 11 or (not name and app != "hello"):
         return
@@ -99,6 +144,7 @@ def handle_packet(data, addr):
         t.update({
             "app": app,
             "name": name,
+            "board_name": board_name,
             "ip": clean_str(msg.get("ip", addr[0]), 15) or addr[0],
             "person": person,
             "score": to_int(msg.get("score"), 0, 0, 100),
@@ -253,6 +299,27 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass
 
+    def do_POST(self):
+        if self.path != "/rename":
+            self.send_error(404)
+            return
+        try:
+            length = min(int(self.headers.get("Content-Length", 0)), 1024)
+            req = json.loads(self.rfile.read(length) or b"{}")
+            mac = clean_str(req.get("mac", ""), 17).lower()
+            name = clean_str(req.get("name", ""), MAX_TEAM_LEN + 1)
+        except (ValueError, AttributeError):
+            self.send_error(400)
+            return
+        if name and not TEAM_NAME_RE.match(name):
+            self.send_error(400, "Use 1-24 letters, digits, space, - _ .")
+            return
+        if not rename(mac, name):
+            self.send_error(404, "unknown board")
+            return
+        self.send_response(204)
+        self.end_headers()
+
     def do_GET(self):
         if self.path in ("/", "/index.html"):
             body = PAGE.encode("utf-8")
@@ -335,6 +402,7 @@ def lan_ips():
 
 
 def main():
+    load_names()
     ap = argparse.ArgumentParser(description="ESP32 workshop live dashboard")
     ap.add_argument("--udp-port", type=int, default=5005)
     ap.add_argument("--http-port", type=int, default=8080)
@@ -398,6 +466,8 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;padding:16p
 .online .dot{background:var(--green);box-shadow:0 0 8px var(--green)}
 .name{font-weight:800;font-size:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rank{margin-left:auto;color:var(--dim);font-size:13px;flex:none}
+.edit{flex:none;background:none;border:1px solid var(--line);border-radius:8px;color:var(--dim);font-size:15px;padding:2px 7px;cursor:pointer}
+.edit:hover{color:var(--text);border-color:var(--dim)}
 .state{margin:10px 0 8px;font-size:26px;font-weight:900;letter-spacing:1px;color:var(--dim)}
 .person .state{color:var(--green)}
 .hello .state{color:var(--blue)} .hello.noname .state{color:var(--amber)}
@@ -486,17 +556,28 @@ function tile(t){
   el.classList.toggle("hello", hello); el.classList.toggle("noname", hello && !t.name);
   if(hello){
     // Hello Board: show what the board report found, so we can see everyone's hardware
-    el.querySelector(".info").innerHTML = `<div class="top"><span class="dot"></span><span class="name" title="${esc(t.label)}">${esc(t.label)}</span><span class="rank">#${t.rank}</span></div>
+    el.querySelector(".info").innerHTML = `<div class="top"><span class="dot"></span><span class="name" title="${esc(t.label)}">${esc(t.label)}</span><span class="rank">#${t.rank}</span><button class="edit" title="Rename team" data-mac="${esc(t.mac)}">&#9998;</button></div>
     <div class="state">${!t.online?"OFFLINE":t.name?"HELLO!":"SET TEAM NAME"}</div>
     <div class="stats"><div><b>${t.psram_mb?t.psram_mb+" MB":"none"}</b>PSRAM</div><div><b>${esc(t.camera||"none")}</b>camera</div><div><b>${t.mic?"yes":"no"}</b>mic</div></div>
     <div class="stats" style="margin-top:6px"><div><b>${t.flash_mb} MB</b>flash</div><div><b>${esc(t.chip)}</b>chip</div><div><b>${t.rssi}</b>dBm</div></div>`;
     return;
   }
-  el.querySelector(".info").innerHTML = `<div class="top"><span class="dot"></span><span class="name" title="${esc(t.label)}">${esc(t.label)}</span><span class="rank">#${t.rank}</span></div>
+  el.querySelector(".info").innerHTML = `<div class="top"><span class="dot"></span><span class="name" title="${esc(t.label)}">${esc(t.label)}</span><span class="rank">#${t.rank}</span><button class="edit" title="Rename team" data-mac="${esc(t.mac)}">&#9998;</button></div>
     <div class="state">${!t.online?"OFFLINE":t.person?"PERSON":"no person"}</div>
     <div class="bar"><i style="width:${t.online?t.score:0}%"></i></div>
     <div class="stats"><div><b>${t.seen}</b>seen</div><div><b>${t.infer_ms}</b>ms</div><div><b>${t.rssi}</b>dBm</div></div>`;
 }
+// ✎ on a tile: set the team name here (works for boards whose console can't be reached)
+grid.addEventListener("click", async e => {
+  const b = e.target.closest(".edit");
+  if(!b) return;
+  e.stopPropagation();
+  const t = teamsBy[b.dataset.mac] || {};
+  const name = prompt("Team name (letters, digits, space, - _ .)", t.name || "");
+  if(name === null) return;
+  const r = await fetch("/rename", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({mac: b.dataset.mac, name: name.trim()})});
+  if(!r.ok) alert("Not saved: use up to 24 letters, digits, space, - _ .");
+}, true);
 let pinned = null, spot = null, spotSince = 0, lastState = {teams:[],events:[]}, teamsBy = {};
 const frameAt = {};
 function setSpot(mac){ if(spot!==mac){ spot = mac; spotSince = Date.now(); document.getElementById("spot-img").removeAttribute("src"); } }

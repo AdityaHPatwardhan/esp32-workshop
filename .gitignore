@@ -5,3 +5,4 @@ sdkconfig
 sdkconfig.old
 __pycache__/
 .DS_Store
+tools/dashboard/team_names.json
