@@ -171,7 +171,7 @@ static int build_packet(char *buf, size_t cap, const esp_netif_ip_info_t *ip)
 
     // team and camera names only contain [A-Za-z0-9 _-.], so they are JSON-safe
     return snprintf(buf, cap,
-                    "{\"v\":1,\"app\":\"hello\",\"team\":\"%s\",\"mac\":\"%02x:%02x:%02x:%02x:%02x:%02x\","
+                    "{\"v\":1,\"fw\":\"" FW_VERSION "\",\"app\":\"hello\",\"team\":\"%s\",\"mac\":\"%02x:%02x:%02x:%02x:%02x:%02x\","
                     "\"ip\":\"" IPSTR "\",\"uptime_s\":%lu,\"chip\":\"%s\",\"rssi\":%d,"
                     "\"psram\":%s,\"psram_mb\":%u,\"flash_mb\":%u,\"camera\":\"%s\",\"mic\":%s}",
                     s_team, mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], IP2STR(&ip->ip),

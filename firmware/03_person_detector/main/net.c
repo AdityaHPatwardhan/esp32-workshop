@@ -57,7 +57,7 @@ static int build_packet(char *buf, size_t cap, const esp_netif_ip_info_t *ip)
 
     // team name is restricted to [A-Za-z0-9 _-.] by config_team_valid(), so it is JSON-safe
     return snprintf(buf, cap,
-                    "{\"v\":1,\"team\":\"%s\",\"mac\":\"%02x:%02x:%02x:%02x:%02x:%02x\","
+                    "{\"v\":1,\"fw\":\"" FW_VERSION "\",\"team\":\"%s\",\"mac\":\"%02x:%02x:%02x:%02x:%02x:%02x\","
                     "\"ip\":\"" IPSTR "\",\"person\":%s,\"score\":%d,\"seen\":%lu,"
                     "\"infer_ms\":%lu,\"uptime_s\":%lu,\"chip\":\"%s\",\"psram\":%s,\"rssi\":%d,\"fps\":%lu.%lu,\"cam\":true}",
                     g_config.team, mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],

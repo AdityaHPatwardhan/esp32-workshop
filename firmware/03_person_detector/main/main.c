@@ -157,7 +157,7 @@ static void detect_task(void *arg)
 
 void app_main(void)
 {
-    printf("\n=== Person Detector workshop firmware ===\n");
+    printf("\n=== Person Detector " FW_VERSION " (%s) ===\n", CONFIG_IDF_TARGET);
 
 #if CONFIG_WORKSHOP_LED_GPIO >= 0
     gpio_reset_pin(CONFIG_WORKSHOP_LED_GPIO);

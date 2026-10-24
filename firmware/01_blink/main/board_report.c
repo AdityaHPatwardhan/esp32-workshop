@@ -387,6 +387,7 @@ void board_report(board_info_t *info)
     }
 
     printf("\n\n  ============  HELLO FROM YOUR %s BOARD  ============\n", CONFIG_IDF_TARGET);
+    printf("  Firmware: Hello Board " FW_VERSION "\n");
     report_chip();
     report_memory();
     report_partitions();

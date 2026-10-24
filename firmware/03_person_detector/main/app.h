@@ -10,6 +10,10 @@ extern "C" {
 
 #define TEAM_MAX_LEN 24
 
+/* Shown at boot and on the dashboard tile, so you can tell which build a board runs.
+ * Bump it with every release, together with the app name in the Launchpad TOML. */
+#define FW_VERSION "v2"
+
 /* config.c - settings stored in the NVS partition (namespace "workshop") */
 typedef struct {
     char team[TEAM_MAX_LEN + 1];

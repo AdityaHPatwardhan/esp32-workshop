@@ -145,6 +145,7 @@ def handle_packet(data, addr):
             "app": app,
             "name": name,
             "board_name": board_name,
+            "fw": clean_str(msg.get("fw", ""), 8),
             "ip": clean_str(msg.get("ip", addr[0]), 15) or addr[0],
             "person": person,
             "score": to_int(msg.get("score"), 0, 0, 100),
@@ -466,6 +467,8 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;padding:16p
 .online .dot{background:var(--green);box-shadow:0 0 8px var(--green)}
 .name{font-weight:800;font-size:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rank{margin-left:auto;color:var(--dim);font-size:13px;flex:none}
+.fw{flex:none;font-size:12px;font-weight:800;padding:1px 6px;border-radius:6px;background:#1c2433;color:var(--dim)}
+.fw.old{background:var(--amber);color:#111}
 .edit{flex:none;background:none;border:1px solid var(--line);border-radius:8px;color:var(--dim);font-size:15px;padding:2px 7px;cursor:pointer}
 .edit:hover{color:var(--text);border-color:var(--dim)}
 .state{margin:10px 0 8px;font-size:26px;font-weight:900;letter-spacing:1px;color:var(--dim)}
@@ -556,16 +559,23 @@ function tile(t){
   el.classList.toggle("hello", hello); el.classList.toggle("noname", hello && !t.name);
   if(hello){
     // Hello Board: show what the board report found, so we can see everyone's hardware
-    el.querySelector(".info").innerHTML = `<div class="top"><span class="dot"></span><span class="name" title="${esc(t.label)}">${esc(t.label)}</span><span class="rank">#${t.rank}</span><button class="edit" title="Rename team" data-mac="${esc(t.mac)}">&#9998;</button></div>
+    el.querySelector(".info").innerHTML = `<div class="top"><span class="dot"></span><span class="name" title="${esc(t.label)}">${esc(t.label)}</span><span class="rank">#${t.rank}</span>${fwChip(t)}<button class="edit" title="Rename team" data-mac="${esc(t.mac)}">&#9998;</button></div>
     <div class="state">${!t.online?"OFFLINE":t.name?"HELLO!":"SET TEAM NAME"}</div>
     <div class="stats"><div><b>${t.psram_mb?t.psram_mb+" MB":"none"}</b>PSRAM</div><div><b>${esc(t.camera||"none")}</b>camera</div><div><b>${t.mic?"yes":"no"}</b>mic</div></div>
     <div class="stats" style="margin-top:6px"><div><b>${t.flash_mb} MB</b>flash</div><div><b>${esc(t.chip)}</b>chip</div><div><b>${t.rssi}</b>dBm</div></div>`;
     return;
   }
-  el.querySelector(".info").innerHTML = `<div class="top"><span class="dot"></span><span class="name" title="${esc(t.label)}">${esc(t.label)}</span><span class="rank">#${t.rank}</span><button class="edit" title="Rename team" data-mac="${esc(t.mac)}">&#9998;</button></div>
+  el.querySelector(".info").innerHTML = `<div class="top"><span class="dot"></span><span class="name" title="${esc(t.label)}">${esc(t.label)}</span><span class="rank">#${t.rank}</span>${fwChip(t)}<button class="edit" title="Rename team" data-mac="${esc(t.mac)}">&#9998;</button></div>
     <div class="state">${!t.online?"OFFLINE":t.person?"PERSON":"no person"}</div>
     <div class="bar"><i style="width:${t.online?t.score:0}%"></i></div>
     <div class="stats"><div><b>${t.seen}</b>seen</div><div><b>${t.infer_ms}</b>ms</div><div><b>${t.rssi}</b>dBm</div></div>`;
+}
+// Firmware version on each tile. Person Detector boards older than LATEST_DETECTOR get flagged.
+const LATEST_DETECTOR = "v2";
+function fwChip(t){
+  if(t.app === "hello") return `<span class="fw">${esc(t.fw || "v1")}</span>`;
+  const old = t.fw !== LATEST_DETECTOR;
+  return `<span class="fw${old ? " old" : ""}" title="${old ? "Old firmware: flash 2-Person-Detector-" + LATEST_DETECTOR : "Latest firmware"}">${old ? "OLD FW" : esc(t.fw)}</span>`;
 }
 // ✎ on a tile: set the team name here (works for boards whose console can't be reached)
 grid.addEventListener("click", async e => {

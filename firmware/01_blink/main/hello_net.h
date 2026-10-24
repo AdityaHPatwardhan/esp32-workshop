@@ -4,6 +4,9 @@
 
 #define TEAM_MAX_LEN 24
 
+/* Shown at boot and on the dashboard tile. Bump it with every release. */
+#define FW_VERSION "v1"
+
 /* Start the Wi-Fi radio (station mode). Safe to call more than once. */
 esp_err_t wifi_start_once(void);
 
