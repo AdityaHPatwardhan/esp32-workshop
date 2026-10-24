@@ -46,6 +46,11 @@ esp_err_t camera_start(void)
         return err;
     }
     sensor_t *s = esp_camera_sensor_get();
+    if (s->id.PID == GC2145_PID) {
+        // The GC2145 has no grayscale mode and would keep sending RGB565. In YUV422 every
+        // other byte is the brightness (Y), which is exactly the byte the driver keeps.
+        s->set_pixformat(s, PIXFORMAT_YUV422);
+    }
 #if CONFIG_CAM_VFLIP
     s->set_vflip(s, 1);
 #endif

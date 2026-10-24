@@ -186,6 +186,9 @@ static void report_camera(void)
         return;
     }
     sensor_t *s = esp_camera_sensor_get();
+    if (s->id.PID == GC2145_PID) {
+        s->set_pixformat(s, PIXFORMAT_YUV422);   // no grayscale mode: Y bytes of YUV422 are the gray image
+    }
     printf(" Found      : %s, talks over I2C (SCCB) at address 0x%02x\n", sensor_name(s->id.PID), s->slv_addr);
     // keep just the model ("OV2640") for the dashboard
     strlcpy(s_info->camera, sensor_name(s->id.PID), sizeof(s_info->camera));

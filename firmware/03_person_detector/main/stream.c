@@ -158,12 +158,20 @@ static void udp_video_task(void *arg)
         if (seq == last_seq) {
             continue;
         }
+        // must fit in one Wi-Fi packet: busy scenes are re-encoded at lower quality
         uint8_t *jpg = NULL;
         size_t len = 0;
-        if (!fmt2jpg(s_udp_frame, FRAME_W * FRAME_H, FRAME_W, FRAME_H, PIXFORMAT_GRAYSCALE, JPEG_QUALITY, &jpg, &len)) {
-            continue;
+        for (int q = JPEG_QUALITY; q >= 10; q -= 20) {
+            free(jpg);
+            jpg = NULL;
+            if (!fmt2jpg(s_udp_frame, FRAME_W * FRAME_H, FRAME_W, FRAME_H, PIXFORMAT_GRAYSCALE, q, &jpg, &len)) {
+                break;
+            }
+            if (len + 8 <= 1400) {
+                break;
+            }
         }
-        if (len + 8 <= 1400) {   // must fit in one Wi-Fi packet
+        if (jpg && len + 8 <= 1400) {
             uint8_t *pkt = malloc(len + 8);
             if (pkt) {
                 memcpy(pkt, "WSF1", 4);

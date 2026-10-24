@@ -55,5 +55,5 @@ direct_dependencies:
 - espressif/esp-tflite-micro
 - espressif/esp32-camera
 manifest_hash: 39974a48cd24ec71e5301b758f0076a6283ee6a1912920671f45464674d3d9b2
-target: esp32
+target: esp32s3
 version: 3.0.0
