@@ -149,7 +149,7 @@ def handle_packet(data, addr):
             "ip": clean_str(msg.get("ip", addr[0]), 15) or addr[0],
             "person": person,
             "score": to_int(msg.get("score"), 0, 0, 100),
-            "seen": to_int(msg.get("seen"), 0, 0, 10**7),
+            "seen_board": to_int(msg.get("seen"), 0, 0, 10**7),
             "infer_ms": to_int(msg.get("infer_ms"), 0, 0, 10**6),
             "uptime_s": to_int(msg.get("uptime_s"), 0, 0, 10**9),
             "rssi": to_int(msg.get("rssi"), 0, -127, 0),
@@ -168,6 +168,10 @@ def handle_packet(data, addr):
                 "camera": clean_str(msg.get("camera", ""), 15),
                 "mic": bool(msg.get("mic", False)),
             })
+        # "people seen" counts from the last reset (POST /reset_seen); a board restart starts it at 0 again
+        if t["seen_board"] < t.get("seen_offset", 0):
+            t["seen_offset"] = 0
+        t["seen"] = t["seen_board"] - t.get("seen_offset", 0)
         t["label"] = display_name(mac, name)
         if is_new:
             add_event("online", f"{t['label']} joined (#{len(first_online)})")
@@ -301,6 +305,16 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def do_POST(self):
+        if self.path == "/reset_seen":
+            with lock:
+                for t in teams.values():
+                    t["seen_offset"] = t.get("seen_board", 0)
+                    t["seen"] = 0
+                add_event("online", "People-seen counts reset")
+            log("people-seen counts reset")
+            self.send_response(204)
+            self.end_headers()
+            return
         if self.path != "/rename":
             self.send_error(404)
             return
