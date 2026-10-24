@@ -1080,6 +1080,34 @@ A neuron is nothing magical: multiply each input by a weight, add them up, add a
   <aside class="notes">The ESP32-S3 has hardware AES, SHA and RSA/ECC accelerators (Part 2's peripheral list), so TLS is fast even on a microcontroller. The trusted certificate authorities are stored in flash (the "CA bundle").
   With RainMaker the device also has its own certificate, so the cloud knows which device it's talking to (mutual TLS).</aside>
   </section>
+  <section data-title="Inside TLS">
+  <div class="slide">
+  <div class="kicker">Security · a bit deeper</div>
+  <h2>How TLS actually keeps it secret</h2>
+  <div class="row grow">
+    <div class="card" style="flex:1.25;display:flex;flex-direction:column">
+      <h3>🎨 Agreeing on a key, in public</h3>
+      <div style="flex:1;display:flex;align-items:center"><svg viewBox="0 0 560 330" style="width:100%">
+        <g font-size="15" font-weight="800" text-anchor="middle"><text x="110" y="22">📟 ESP32</text><text x="450" y="22">☁️ Cloud</text><text x="280" y="22" fill="#5b6478">everyone can see</text></g>
+        <g class="fragment" data-fragment-index="1"><circle cx="280" cy="70" r="26" fill="#f2c94c" stroke="#14182b" stroke-opacity=".15" stroke-width="2"/><text x="280" y="118" text-anchor="middle" font-size="13" fill="#5b6478">public colour</text><circle cx="110" cy="70" r="26" fill="#e0457b" stroke="#14182b" stroke-opacity=".15" stroke-width="2"/><text x="110" y="118" text-anchor="middle" font-size="13" fill="#5b6478">secret: red</text><circle cx="450" cy="70" r="26" fill="#2f80ed" stroke="#14182b" stroke-opacity=".15" stroke-width="2"/><text x="450" y="118" text-anchor="middle" font-size="13" fill="#5b6478">secret: blue</text></g>
+        <g class="fragment" data-fragment-index="2"><circle cx="110" cy="170" r="26" fill="#f2994a" stroke="#14182b" stroke-opacity=".15" stroke-width="2"/><text x="110" y="218" text-anchor="middle" font-size="13" fill="#5b6478">red + yellow</text><circle cx="450" cy="170" r="26" fill="#6fcf97" stroke="#14182b" stroke-opacity=".15" stroke-width="2"/><text x="450" y="218" text-anchor="middle" font-size="13" fill="#5b6478">blue + yellow</text>
+          <path d="M140 170 C 260 150 300 150 420 170" fill="none" stroke="#5b6478" stroke-width="2" stroke-dasharray="6 5"/><text x="280" y="148" text-anchor="middle" font-size="13" fill="#5b6478">swap the mixes</text></g>
+        <g class="fragment" data-fragment-index="3"><circle cx="110" cy="270" r="26" fill="#9b6a4a" stroke="#14182b" stroke-opacity=".15" stroke-width="2"/><circle cx="450" cy="270" r="26" fill="#9b6a4a" stroke="#14182b" stroke-opacity=".15" stroke-width="2"/>
+          <text x="110" y="318" text-anchor="middle" font-size="13" fill="#179b55" font-weight="800">+ my red = same key</text><text x="450" y="318" text-anchor="middle" font-size="13" fill="#179b55" font-weight="800">+ my blue = same key</text>
+          <text x="280" y="268" text-anchor="middle" font-size="13" fill="#d93f2e">eavesdropper: can't</text><text x="280" y="284" text-anchor="middle" font-size="13" fill="#d93f2e">un-mix the paint 🤷</text></g>
+      </svg></div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:16px">
+      <div class="card fragment" data-fragment-index="4"><h3>📜 Is it really the cloud?</h3><p>Its certificate is <b>signed</b> by an authority. The ESP32 keeps those authorities' public keys in <b>flash</b> (the CA bundle) and checks the signature. It also needs the right <b>time</b> to check the certificate hasn't expired.</p></div>
+      <div class="card fragment" data-fragment-index="5" style="border-color:var(--green)"><h3>🤝 And is it really your board?</h3><p>RainMaker uses <b>mutual TLS</b>: the board shows its <b>own certificate</b> too, which it got when it was claimed. Nobody else can pretend to be your switch.</p></div>
+    </div>
+  </div>
+  </div>
+  <aside class="notes">The paint mixing is Diffie-Hellman key exchange (TLS uses the elliptic-curve version, ECDHE). Mixing is easy, un-mixing is practically impossible: that's the whole trick. Both sides end up with the same key without it ever crossing the network.
+  Certificate check: the server's certificate is signed by a certificate authority (CA). The ESP32 ships with a bundle of trusted CA public keys in flash (ESP-IDF's x509 certificate bundle) and verifies the signature. That's why devices sync the time (SNTP) before HTTPS: an expired or not-yet-valid certificate is rejected.
+  Mutual TLS: normally only the server proves who it is. In RainMaker the device also has a private key + certificate (from claiming), so the cloud can tell your switch from an impostor.
+  On the ESP32 this runs in mbedTLS with hardware acceleration for AES, SHA and RSA; a handshake takes about a second, after that the encryption is cheap.</aside>
+  </section>
   <section data-title="MQTT">
   <div class="slide">
   <div class="kicker">The device's language</div>
