@@ -18,14 +18,15 @@
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
-#include "esp_netif.h"
-#include "esp_event.h"
 #include "nvs_flash.h"
 #include "esp_camera.h"
 #include "driver/i2s_std.h"
 #include "soc/soc.h"
 #include "sdkconfig.h"
 #include "board_report.h"
+#include "hello_net.h"
+
+static board_info_t *s_info;   // filled in as we go, sent to the dashboard later
 
 /* ---------- things placed in different memories, on purpose ---------- */
 static const char greeting_in_flash[] = "I am a const string";   // flash (read-only data)
@@ -83,7 +84,9 @@ static void report_chip(void)
     printf(" Radio      : %s%s\n", (chip.features & CHIP_FEATURE_WIFI_BGN) ? "Wi-Fi 2.4 GHz  " : "",
            (chip.features & CHIP_FEATURE_BLE) ? "Bluetooth LE" : "");
     printf(" Flash      : %" PRIu32 " MB  (outside the chip, on SPI)\n", flash_size / (1024 * 1024));
+    s_info->flash_mb = flash_size / (1024 * 1024);
     if (esp_psram_is_initialized()) {
+        s_info->psram_mb = esp_psram_get_size() / (1024 * 1024);
         printf(" PSRAM      : %u MB  (outside the chip, on SPI)\n", (unsigned)(esp_psram_get_size() / (1024 * 1024)));
     } else {
         printf(" PSRAM      : none found\n");
@@ -184,6 +187,9 @@ static void report_camera(void)
     }
     sensor_t *s = esp_camera_sensor_get();
     printf(" Found      : %s, talks over I2C (SCCB) at address 0x%02x\n", sensor_name(s->id.PID), s->slv_addr);
+    // keep just the model ("OV2640") for the dashboard
+    strlcpy(s_info->camera, sensor_name(s->id.PID), sizeof(s_info->camera));
+    s_info->camera[strcspn(s_info->camera, " ")] = '\0';
 
     // throw away the first frames while auto-exposure settles, then measure brightness
     camera_fb_t *fb = NULL;
@@ -277,6 +283,7 @@ static void report_mic(void)
         bars += 2;   // rough log scale
     }
     printf(" Found      : I2S digital mic (BCLK %d / WS %d / DATA %d)\n", CONFIG_MIC_PIN_BCLK, CONFIG_MIC_PIN_WS, CONFIG_MIC_PIN_DIN);
+    s_info->mic = true;
     printf(" Sound level: [%-30.*s]  (clap and press RST!)\n", bars, "##############################");
 }
 #endif
@@ -297,11 +304,7 @@ static void report_wifi(void)
     esp_log_level_set("pp", ESP_LOG_WARN);
     esp_log_level_set("net80211", ESP_LOG_WARN);
 
-    esp_netif_init();
-    esp_event_loop_create_default();
-    esp_netif_create_default_wifi_sta();
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    if (esp_wifi_init(&cfg) != ESP_OK || esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK || esp_wifi_start() != ESP_OK) {
+    if (wifi_start_once() != ESP_OK) {
         printf(" Wi-Fi did not start\n");
         return;
     }
@@ -326,7 +329,7 @@ static void report_wifi(void)
                aps[i].primary, aps[i].rssi, bars, "||||");
     }
     free(aps);
-    // radio stays on, so its tasks show up in the task list below
+    // radio stays on (its tasks show up in the task list below) and joins the workshop network next
 }
 #endif
 
@@ -370,8 +373,10 @@ static void report_counters(void)
     printf(" Press BOOT to restart, or unplug and plug back in, and compare.\n");
 }
 
-void board_report(void)
+void board_report(board_info_t *info)
 {
+    s_info = info;
+    memset(info, 0, sizeof(*info));
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         nvs_flash_erase();

@@ -2,8 +2,9 @@
  * Workshop app 01: Hello Board + Blink
  *
  * Prints a report about the board (chip, memory, flash partitions, camera,
- * microphone, Wi-Fi networks nearby, running tasks, restart counters), then
- * blinks the LED. Press BOOT to restart and watch the counters.
+ * microphone, Wi-Fi networks nearby, running tasks, restart counters), sends a
+ * short version of it to the dashboard on the projector, then blinks the LED.
+ * Type `team <name>` in the console to set your team name. Press BOOT to restart.
  *
  * By the time app_main() runs, a lot has already happened:
  *   1. ROM bootloader (inside the chip, unchangeable) read the strapping
@@ -26,6 +27,7 @@
 #include "soc/soc.h"
 #include "sdkconfig.h"
 #include "board_report.h"
+#include "hello_net.h"
 
 static const char *TAG = "blink";
 
@@ -62,8 +64,16 @@ static void led_write(int on)
 
 void app_main(void)
 {
-    board_report();
+    static board_info_t info;
+    board_report(&info);
+    hello_net_start(&info);
+    if (team_get()[0] == '\0') {
+        printf(">> No team name yet. Type:  team <your team name>\n");
+    } else {
+        printf(">> Team \"%s\"\n", team_get());
+    }
     printf("Blinking the LED on GPIO%d. Press BOOT to restart.\n\n", LED_GPIO);
+    console_start();
 
     // BOOT button: input with pull-up, reads 0 while pressed
     gpio_reset_pin(BOOT_BUTTON_GPIO);
@@ -79,8 +89,8 @@ void app_main(void)
     while (1) {
         on = !on;
         led_write(on);
-        if (on) {
-            ESP_LOGI(TAG, "blink #%" PRIu32 " (LED on)", ++count);
+        if (on && ++count % 10 == 1) {   // not every blink: it would bury the console
+            ESP_LOGI(TAG, "blink #%" PRIu32 " (LED on)", count);
         }
         // Not a busy-wait: this task sleeps and FreeRTOS lets the CPU do
         // other work (or idle) until the delay expires. We wake every 20 ms

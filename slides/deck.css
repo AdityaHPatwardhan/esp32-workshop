@@ -114,6 +114,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
 
 pre, code { font-family: var(--mono); }
 pre { margin: 0; background: #f4f5f9; border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; font-size: 19px; line-height: 1.5; overflow: hidden; }
+a.lplink { display: inline-block; font-size: 15px; line-height: 1.35; word-break: break-all; color: var(--cyan); text-decoration: none; background: #f4f5f9; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; margin-top: 4px; }
 code.inline { background: #f4f5f9; border: 1px solid var(--line); border-radius: 6px; padding: 1px 8px; font-size: .9em; }
 .k { color: var(--pink); } .s { color: var(--green); } .c { color: #8a94b0; } .f { color: var(--cyan); } .n { color: var(--amber); }
 .hl1 { background: rgba(212,146,10,.13); } .hl2 { background: rgba(11,138,209,.11); } .hl3 { background: rgba(124,92,240,.11); } .hl4 { background: rgba(23,155,85,.12); }

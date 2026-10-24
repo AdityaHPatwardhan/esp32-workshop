@@ -24,6 +24,21 @@ menu "Workshop: Hello Board (blink + board report)"
             GPIO_OUT_W1TS / GPIO_OUT_W1TC registers. Same result: a driver
             call is just a memory write underneath.
 
+    config WORKSHOP_WIFI_SSID
+        string "Workshop Wi-Fi SSID"
+        default "esp-workshop"
+        help
+            Used when no SSID is stored in NVS (flash.py --ssid or the
+            `wifi` console command override it without rebuilding).
+
+    config WORKSHOP_WIFI_PASSWORD
+        string "Workshop Wi-Fi password"
+        default "espworkshop"
+
+    config WORKSHOP_UDP_PORT
+        int "Dashboard UDP broadcast port"
+        default 5005
+
     config PROBE_CAMERA
         bool "Look for a camera at boot"
         default y

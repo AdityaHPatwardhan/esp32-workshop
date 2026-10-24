@@ -65,6 +65,8 @@ def to_int(value, default=0, lo=None, hi=None):
 
 def display_name(mac, name):
     """Team names may collide; disambiguate with the last 4 hex digits of the MAC."""
+    if not name:
+        return f"no team name ·{mac.replace(':', '')[-4:]}"
     clash = any(t["name"] == name for m, t in teams.items() if m != mac)
     return f"{name} ·{mac.replace(':', '')[-4:]}" if clash else name
 
@@ -78,7 +80,9 @@ def handle_packet(data, addr):
         return
     mac = clean_str(msg.get("mac", ""), 17).lower()
     name = clean_str(msg.get("team", ""), MAX_TEAM_LEN)
-    if len(mac) < 11 or not name:
+    app = "hello" if msg.get("app") == "hello" else "detector"
+    # Hello Board reports in before the team has typed a name; the detector always has one
+    if len(mac) < 11 or (not name and app != "hello"):
         return
 
     now = time.time()
@@ -91,8 +95,9 @@ def handle_packet(data, addr):
                  "first_seen": now}
             teams[mac] = t
             first_online.append(mac)
-        was_online, was_person = t["online"], t["person"]
+        was_online, was_person, was_app, was_name = t["online"], t["person"], t.get("app"), t.get("name")
         t.update({
+            "app": app,
             "name": name,
             "ip": clean_str(msg.get("ip", addr[0]), 15) or addr[0],
             "person": person,
@@ -108,6 +113,14 @@ def handle_packet(data, addr):
             "online": True,
             "last": now,
         })
+        # board details from Hello Board's report (the detector doesn't send them: keep the last ones)
+        if "flash_mb" in msg:
+            t.update({
+                "psram_mb": to_int(msg.get("psram_mb"), 0, 0, 1024),
+                "flash_mb": to_int(msg.get("flash_mb"), 0, 0, 1024),
+                "camera": clean_str(msg.get("camera", ""), 15),
+                "mic": bool(msg.get("mic", False)),
+            })
         t["label"] = display_name(mac, name)
         if is_new:
             add_event("online", f"{t['label']} joined (#{len(first_online)})")
@@ -115,6 +128,10 @@ def handle_packet(data, addr):
         elif not was_online:
             add_event("online", f"{t['label']} is back online")
             log(f"back online: {name!r} ({mac})")
+        if not is_new and not was_name and name:
+            add_event("online", f"{display_name(mac, '')} is now team {t['label']}")
+        if was_app and was_app != app and not is_new:
+            add_event("online", f"{t['label']} is now running {'Hello Board' if app == 'hello' else 'Person Detector'}")
         if person and not was_person:
             add_event("person", f"{t['label']} spotted a person!")
 
@@ -383,6 +400,8 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;padding:16p
 .rank{margin-left:auto;color:var(--dim);font-size:13px;flex:none}
 .state{margin:10px 0 8px;font-size:26px;font-weight:900;letter-spacing:1px;color:var(--dim)}
 .person .state{color:var(--green)}
+.hello .state{color:var(--blue)} .hello.noname .state{color:var(--amber)}
+.hello .stats b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bar{height:8px;background:#0a0e15;border-radius:6px;overflow:hidden;margin-bottom:10px}
 .bar i{display:block;height:100%;background:var(--blue);transition:width .3s}
 .person .bar i{background:var(--green)}
@@ -412,10 +431,12 @@ li span{color:var(--dim);float:right;margin-left:8px}
 #spot .label{color:var(--amber);font-size:13px;letter-spacing:1.5px;text-transform:uppercase}
 .cam{position:relative;aspect-ratio:1;background:#000;border-radius:10px;overflow:hidden;margin:-2px -4px 10px}
 .tile{cursor:pointer} .tile.pinned{outline:3px solid var(--amber);outline-offset:2px}
+body.hellomode .det-only,body:not(.hellomode) .hello-only,body.hellomode #spot{display:none}
+.checks{list-style:none;padding:0} .checks li span{color:var(--text);font-weight:800}
 #empty{grid-column:1/-1;text-align:center;color:var(--dim);font-size:22px;padding:60px 10px}
 </style></head><body>
 <header>
-  <h1>&#128065; TinyML Person Detector &mdash; Live</h1>
+  <h1 id="title">&#128075; Hello Board &mdash; Live</h1>
   <div class="count"><b id="n">0</b> teams online <span id="conn" class="conn">connecting…</span></div>
 </header>
 <main>
@@ -433,8 +454,9 @@ li span{color:var(--dim);float:right;margin-left:8px}
     <section id="grid"><div id="empty">Waiting for boards… flash, set your team name, and watch this space.</div></section>
   </div>
   <aside>
-    <div class="card"><h2>&#127942; Most people seen</h2><ol id="lb-seen"></ol></div>
-    <div class="card"><h2>&#9889; Fastest inference</h2><ol id="lb-fast"></ol></div>
+    <div class="card hello-only"><h2>&#128269; Board check</h2><ul id="checks" class="checks"></ul></div>
+    <div class="card det-only"><h2>&#127942; Most people seen</h2><ol id="lb-seen"></ol></div>
+    <div class="card det-only"><h2>&#9889; Fastest inference</h2><ol id="lb-fast"></ol></div>
     <div class="card"><h2>&#129351; First online</h2><ol id="lb-first"></ol></div>
     <div class="card"><h2>&#128227; Live feed</h2><ul id="ticker"></ul></div>
   </aside>
@@ -460,6 +482,16 @@ function tile(t){
   el.classList.toggle("pinned", pinned===t.mac);
   el.querySelector(".cam").style.display = t.cam ? "" : "none";
   lastPerson[t.mac] = !!(t.online && t.person);
+  const hello = t.app === "hello";
+  el.classList.toggle("hello", hello); el.classList.toggle("noname", hello && !t.name);
+  if(hello){
+    // Hello Board: show what the board report found, so we can see everyone's hardware
+    el.querySelector(".info").innerHTML = `<div class="top"><span class="dot"></span><span class="name" title="${esc(t.label)}">${esc(t.label)}</span><span class="rank">#${t.rank}</span></div>
+    <div class="state">${!t.online?"OFFLINE":t.name?"HELLO!":"SET TEAM NAME"}</div>
+    <div class="stats"><div><b>${t.psram_mb?t.psram_mb+" MB":"none"}</b>PSRAM</div><div><b>${esc(t.camera||"none")}</b>camera</div><div><b>${t.mic?"yes":"no"}</b>mic</div></div>
+    <div class="stats" style="margin-top:6px"><div><b>${t.flash_mb} MB</b>flash</div><div><b>${esc(t.chip)}</b>chip</div><div><b>${t.rssi}</b>dBm</div></div>`;
+    return;
+  }
   el.querySelector(".info").innerHTML = `<div class="top"><span class="dot"></span><span class="name" title="${esc(t.label)}">${esc(t.label)}</span><span class="rank">#${t.rank}</span></div>
     <div class="state">${!t.online?"OFFLINE":t.person?"PERSON":"no person"}</div>
     <div class="bar"><i style="width:${t.online?t.score:0}%"></i></div>
@@ -471,10 +503,11 @@ function setSpot(mac){ if(spot!==mac){ spot = mac; spotSince = Date.now(); docum
 function renderSpot(){
   const box = document.getElementById("spot");
   if(!spot || !teamsBy[spot]){
-    const cand = Object.values(teamsBy).find(t => t.online && t.cam);
+    const cand = Object.values(teamsBy).find(t => t.online && t.cam && t.app !== "hello");
     if(cand) setSpot(cand.mac);
   }
-  const t = teamsBy[spot];
+  let t = teamsBy[spot];
+  if(t && (t.app === "hello" || !t.cam)) t = null;   // Hello Board has no video
   box.hidden = !t;
   if(!t) return;
   box.classList.toggle("person", t.online && t.person);
@@ -491,6 +524,15 @@ function render(s){
   const ts = s.teams.slice().sort((a,b)=>a.rank-b.rank);
   document.getElementById("empty").style.display = ts.length ? "none" : "";
   ts.forEach(tile);
+  // Hello Board mode until any board runs the Person Detector
+  const on = ts.filter(t => t.online), hello = !on.some(t => t.app !== "hello");
+  document.body.classList.toggle("hellomode", hello);
+  document.getElementById("title").innerHTML = hello ? "&#128075; Hello Board &mdash; Live" : "&#128065; TinyML Person Detector &mdash; Live";
+  const hb = on.filter(t => t.app === "hello"), n = hb.length;
+  const cnt = f => `${hb.filter(f).length} / ${n}`;
+  document.getElementById("checks").innerHTML = n ? [
+    li("Team name set", cnt(t => t.name)), li("Camera found", cnt(t => t.camera)),
+    li("PSRAM", cnt(t => t.psram_mb)), li("Microphone", cnt(t => t.mic))].join("") : li("waiting for boards…");
   document.getElementById("n").textContent = ts.filter(t=>t.online).length;
   document.getElementById("lb-seen").innerHTML = ts.slice().sort((a,b)=>b.seen-a.seen).slice(0,5).map(t=>li(t.label,t.seen)).join("");
   document.getElementById("lb-fast").innerHTML = ts.filter(t=>t.online&&t.infer_ms>0).sort((a,b)=>a.infer_ms-b.infer_ms).slice(0,5).map(t=>li(t.label,t.infer_ms+" ms")).join("");

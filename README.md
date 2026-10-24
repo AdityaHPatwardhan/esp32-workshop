@@ -23,8 +23,8 @@ source ~/esp/esp-idf/export.sh
 ```
 
 Before building for the real boards, set the Wi-Fi name/password the boards should join
-in `firmware/03_person_detector/main/Kconfig.projbuild` (default `esp-workshop` /
-`esp32workshop`). It can also be changed on the day without a rebuild (`wifi <ssid> <pass>`
+in both apps' `main/Kconfig.projbuild` (default `esp-workshop` /
+`espworkshop`). It can also be changed on the day without a rebuild (`wifi <ssid> <pass>`
 in the console, or `flash.py --ssid`).
 
 ### ESP32-S3-EYE

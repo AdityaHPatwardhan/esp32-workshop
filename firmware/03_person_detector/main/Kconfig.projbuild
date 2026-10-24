@@ -9,7 +9,7 @@ menu "Workshop: Person Detector"
 
     config WORKSHOP_WIFI_PASSWORD
         string "Default Wi-Fi password"
-        default "esp32workshop"
+        default "espworkshop"
 
     config WORKSHOP_UDP_PORT
         int "Dashboard UDP broadcast port"

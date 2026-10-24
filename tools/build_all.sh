@@ -39,6 +39,7 @@ build() {
 build 01_blink                       01_blink            build
 build 03_person_detector             03_person_detector  build
 # the board profile already picks the right console, so the usbconsole variant is generic-board only
+[[ -z "$BOARD" ]] && build 01_blink-usbconsole            01_blink            build-usbconsole  sdkconfig.usbconsole
 [[ -z "$BOARD" ]] && build 03_person_detector-usbconsole  03_person_detector  build-usbconsole  sdkconfig.usbconsole
 
 echo "Done. Binaries in $OUT"

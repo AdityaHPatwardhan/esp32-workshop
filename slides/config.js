@@ -7,10 +7,9 @@ window.CONFIG = {
   college:    "Pune Institute of Computer Technology",
   date:       "",                 // optional, e.g. "14 November 2026"
   // ESP Launchpad links for the workshop binaries (see tools/launchpad/README.md)
-  launchpad:  "espressif.github.io/esp-launchpad/minimal-launchpad/?flashConfigURL=…",
-  shortLink:  "bit.ly/your-link",
-  rainmaker:  "espressif.github.io/esp-launchpad",
-  repo:       "github.com/YOUR-GITHUB-USER/esp32-workshop",
+  // One link flashes all three apps (Hello Board, Person Detector, RainMaker switch)
+  launchpad:  "https://espressif.github.io/esp-launchpad/?flashConfigURL=https://adityahpatwardhan.github.io/esp32-workshop-flash/s3cam.toml",
+  repo:       "github.com/AdityaHPatwardhan/esp32-workshop",
   wifiSsid:   "esp-workshop",
   dashboard:  "http://<your-laptop-ip>:8080",
   // The "Live" slide embeds the dashboard running on this laptop

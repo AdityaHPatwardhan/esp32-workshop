@@ -9,6 +9,11 @@
   // ---- CONFIG placeholders and hosts
   document.querySelectorAll("[data-cfg]").forEach(el => { el.textContent = CONFIG[el.dataset.cfg] ?? ""; });
   if (!CONFIG.date && $("dateSep")) $("dateSep").hidden = true;
+  // clickable links (shown without https://)
+  document.querySelectorAll("[data-cfg-link]").forEach(el => {
+    const url = CONFIG[el.dataset.cfgLink] ?? "";
+    el.href = url; el.target = "_blank"; el.textContent = url.replace(/^https?:\/\//, "");
+  });
   document.querySelectorAll("[data-hosts]").forEach(el => {
     el.innerHTML = CONFIG.hosts.map(h => `<div><b>${h.name}</b><span>${h.org}</span></div>`).join("");
   });

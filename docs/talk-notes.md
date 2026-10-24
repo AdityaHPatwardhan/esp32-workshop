@@ -47,7 +47,7 @@ This file is the longer script behind them.
 ## 0:15 – Hands-on 1: Blink (20 min)
 
 **Do**
-1. Launchpad → *01-Blink* → Connect → Flash.
+1. Launchpad link (on the slide) → Connect → *1-Hello-Board* → Flash. Then `team <name>` in the Console.
 2. LED blinks. Open the console: the **board report** (chip, PSRAM, memory, partitions, camera, mic, Wi-Fi networks, tasks, counters), then `blink #1, #2…`.
 3. **Press RST and watch the console.** Tell them:
    > "Everything I'll explain in the next hour is in these 40 lines."
