@@ -102,6 +102,10 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
 .hero-tag.t1 { right: 18px; top: 18px; } .hero-tag.t2 { left: 30px; bottom: 6px; }
 .slide.divider { padding-right: 600px; }
 .divimg { position: absolute; right: 72px; top: 50%; width: 460px; height: 460px; object-fit: cover; border-radius: 28px; transform: translateY(-50%) rotate(2deg); box-shadow: 0 24px 60px rgba(20,24,43,.22); }
+.slide.divider:has(.divwire) { padding-right: 680px; }
+.divwire { position: absolute; right: 40px; top: 50%; width: 620px; height: 400px; transform: translateY(-50%); }
+.wiresteps { margin: 26px 0 0; padding-left: 26px; font-size: 20px; line-height: 1.35; color: var(--text); }
+.wiresteps li { margin: 6px 0; }
 .credit { position: absolute; left: 72px; bottom: 16px; font-size: 11px; color: #8a92a8; }
 .hosts { display: flex; gap: 40px; }
 .hosts div { border-left: 4px solid var(--amber); padding-left: 14px; text-align: left; }

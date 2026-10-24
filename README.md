@@ -76,6 +76,5 @@ The board's datasheet is unclear, so these must be confirmed on real hardware:
 ## Image credits (slides/img)
 
 - `esp32-s3-wroom-1.jpg`, `esp32-s3-devkitc.jpg`: Espressif, from the esp-dev-kits ESP32-S3-DevKitC-1 docs
-- `esp32-s3-devkit.jpg`: "ESP32-S3 on paper" by VectorVoyager, CC BY-SA 4.0, via Wikimedia Commons
 - `esp32-s3-eye*.{png,jpg}`: Espressif, from the ESP-WHO ESP32-S3-EYE Getting Started Guide
 - `ai-sees.png`, `dashboard.png`: captured from our own board and dashboard
